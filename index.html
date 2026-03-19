@@ -1883,20 +1883,9 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     <script src="assets/elements-handlers.min.js" id="pro-elements-handlers-js"></script>
 
     <script>
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key.toLowerCase() === 'u') e.preventDefault();
-            if (e.key === 'F12') e.preventDefault();
-            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
-        });
+        
 
-        document.addEventListener('contextmenu', function(e) {
-            const tag = e.target.tagName;
-            const dentroTransferencia = e.target.closest('#css7_transf') !== null;
-
-            if (!['INPUT', 'TEXTAREA'].includes(tag) && !dentroTransferencia) {
-                e.preventDefault();
-            }
-        });
+        
 
 
      
