@@ -1921,28 +1921,25 @@ src="https://www.facebook.com/tr?id=945110901226393&ev=PageView&noscript=1"/>
         
 
 
-     
-<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  const nomes = ["Maria", "João", "Ana", "Carlos", "Fernanda", "Lucas", "Juliana", "Rafael", "Patrícia", "Bruno"];
-  const valores = ["R$12,37", "R$18,92", "R$27,48", "R$33,11", "R$41,76", "R$52,63", "R$67,29", "R$83,84"];
+  const nomes = ["Maria", "João", "Ana", "Carlos", "Fernanda"];
+const valores = ["R$12,37", "R$18,92", "R$27,48", "R$33,11"];
 
-  function notificar() {
-    console.log("rodando notificação..."); // PRA TESTE
+function notificar() {
+  const nome = nomes[Math.floor(Math.random() * nomes.length)];
+  const valor = valores[Math.floor(Math.random() * valores.length)];
 
-    const nome = nomes[Math.floor(Math.random() * nomes.length)];
-    const valor = valores[Math.floor(Math.random() * valores.length)];
+  iziToast.show({
+    title: '💚 Doação recebida',
+    message: `${nome} acabou de doar ${valor}`,
+    position: 'bottomRight',
+    timeout: 5000
+  });
+}
 
-    iziToast.show({
-      title: '💚 Doação recebida',
-      message: `${nome} acabou de doar ${valor}`,
-      position: 'bottomRight',
-      timeout: 5000
-    });
-  }
 
   setTimeout(() => {
     notificar();
