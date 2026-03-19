@@ -1422,6 +1422,13 @@ src="https://www.facebook.com/tr?id=945110901226393&ev=PageView&noscript=1"/>
 
         fbq('track', 'InitiateCheckout');
 
+        ttq.track('CompletePayment', {
+            content_id: 'doacao_pix',
+            content_type: 'product',
+            value: 10.00,
+            currency: 'BRL'
+        });
+
         iziToast.success({
             title: 'PIX Copiado!',
             message: 'Agora cola no banco e salva um doguinho 🐕',
