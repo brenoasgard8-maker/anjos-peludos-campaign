@@ -1385,9 +1385,12 @@ var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n
     const input = document.getElementById('css7_inputPix');
     navigator.clipboard.writeText(input.value);
 
-    fbq('trackCustom', 'PixClick'); // 🔥 TRACK AQUI
+    fbq('trackCustom', 'PixClick', {
+        value: 25.00,
+        currency: 'BRL'
+    });
 
-    alert("Chave PIX copiada com sucesso! cole no seu banco);
+    alert("Chave PIX copiada! Agora cole no seu banco e finalize a doação 🙏");
 }
                             </script>
 
