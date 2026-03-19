@@ -1,0 +1,269 @@
+// js/ninjapay.js
+jQuery(document).ready(function($) {
+    // Botão para gerar PIX
+    $('#ninjapay-generate-pix').on('click', function() {
+        var amount = $('#ninjapay-amount').val();
+        
+        if (!amount || amount <= 0) {
+            alert('Por favor, digite um valor válido.');
+            return;
+        }
+        
+        // Mostra indicador de carregamento
+        $(this).hide();
+        $('#ninjapay-loading').show();
+        $('#ninjapay-error').hide();
+        
+        // Log para depuração
+        console.log('Enviando requisição para gerar PIX. Valor:', amount);
+        
+        // Faz a requisição AJAX
+        $.ajax({
+            url: ninjapay_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'generate_pix',
+                nonce: ninjapay_ajax.nonce,
+                amount: amount
+            },
+            dataType: 'json', // Especifica que esperamos JSON como resposta
+            success: function(response) {
+                // Esconde o indicador de carregamento
+                $('#ninjapay-loading').hide();
+                
+                console.log('Resposta recebida:', response);
+                
+                if (response && response.success) {
+                    // Esconde o container do QR code já que não precisamos dele
+                    $('.ninjapay-qrcode-container').hide();
+                    
+                    // Exibe o código PIX
+                    $('#ninjapay-pix-code').val(response.data.pix_code);
+                    
+                    // Adiciona um título mais claro para o código PIX
+                    $('.ninjapay-copy-container p').text('Código PIX para pagamento:');
+                    
+                    // Exibe o resultado
+                    $('#ninjapay-result').show();
+                    $('#ninjapay-generate-pix').hide();
+                    
+                    console.log('PIX gerado com sucesso. Código:', response.data.pix_code);
+                } else {
+                    // Exibe mensagem de erro
+                    var errorMsg = (response && response.data && response.data.message) ? 
+                        response.data.message : 'Ocorreu um erro ao gerar o PIX.';
+                    
+                    $('#ninjapay-error-message').text(errorMsg);
+                    $('#ninjapay-error').show();
+                    $('#ninjapay-generate-pix').hide();
+                    
+                    // Log detalhado do erro no console
+                    console.error('Erro NinjaPay:', response);
+                    
+                    // Se houver informações detalhadas do erro, exibe-as
+                    if (response && response.data && response.data.status_code) {
+                        console.error('Código de status:', response.data.status_code);
+                    }
+                    
+                    if (response && response.data && response.data.response) {
+                        console.error('Resposta da API:', response.data.response);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                // Esconde o indicador de carregamento
+                $('#ninjapay-loading').hide();
+                
+                // Exibe mensagem de erro
+                $('#ninjapay-error-message').text('Erro ao conectar com o servidor. Tente novamente.');
+                $('#ninjapay-error').show();
+                $('#ninjapay-generate-pix').hide();
+                
+                // Log detalhado do erro no console
+                console.error('Erro AJAX:', status, error);
+                console.error('Detalhes do XHR:', xhr.status, xhr.statusText);
+                
+                try {
+                    var responseJson = JSON.parse(xhr.responseText);
+                    console.error('Resposta do servidor:', responseJson);
+                } catch (e) {
+                    console.error('Resposta do servidor (texto):', xhr.responseText);
+                }
+            },
+            complete: function() {
+                // Garantir que o botão "Tentar Novamente" esteja visível em caso de erro
+                if (!$('#ninjapay-result').is(':visible')) {
+                    $('#ninjapay-error').show();
+                }
+            }
+        });
+    });
+    
+    // Botão para tentar novamente
+    $('#ninjapay-try-again').on('click', function() {
+        $('#ninjapay-error').hide();
+        $('#ninjapay-generate-pix').show();
+    });
+    
+    // Botão para copiar o código PIX
+    $('#ninjapay-copy-button').on('click', function() {
+        var pixCode = $('#ninjapay-pix-code');
+        pixCode.select();
+        
+        // Usa a API moderna de clipboard se disponível
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(pixCode.val())
+                .then(function() {
+                    // Feedback visual
+                    var originalText = $('#ninjapay-copy-button').text();
+                    $('#ninjapay-copy-button').text('Copiado!');
+                    setTimeout(function() {
+                        $('#ninjapay-copy-button').text(originalText);
+                    }, 2000);
+                })
+                .catch(function(err) {
+                    console.error('Erro ao copiar texto:', err);
+                    // Fallback para o método antigo
+                    document.execCommand('copy');
+                });
+        } else {
+            // Fallback para navegadores mais antigos
+            document.execCommand('copy');
+            
+            // Feedback visual
+            var originalText = $(this).text();
+            $(this).text('Copiado!');
+            setTimeout(function() {
+                $('#ninjapay-copy-button').text(originalText);
+            }, 2000);
+        }
+    });
+    
+    // Verifica se há erros de inicialização
+    if (typeof ninjapay_ajax === 'undefined') {
+        console.error('Erro: ninjapay_ajax não está definido. Verifique se o script está sendo carregado corretamente.');
+    }
+});
+
+// Adicione esta função ao seu arquivo js/ninjapay.js
+function startPaymentStatusCheck(transactionId) {
+    if (!transactionId) return;
+    
+    console.log('Iniciando verificação de status para transação:', transactionId);
+    
+    // Variável para controlar o intervalo
+    let checkCount = 0;
+    const maxChecks = 30; // Verificar por até 5 minutos (30 * 10 segundos)
+    
+    // Função para verificar o status
+    function checkPaymentStatus() {
+        checkCount++;
+        
+        // Se excedeu o número máximo de verificações, para de verificar
+        if (checkCount > maxChecks) {
+            console.log('Tempo limite de verificação excedido');
+            clearInterval(statusInterval);
+            return;
+        }
+        
+        console.log(`Verificando status do pagamento (${checkCount}/${maxChecks})...`);
+        
+        $.ajax({
+            url: ninjapay_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'check_payment_status',
+                nonce: ninjapay_ajax.nonce,
+                transaction_id: transactionId
+            },
+            dataType: 'json',
+            success: function(response) {
+                console.log('Resposta da verificação de status:', response);
+                
+                if (response && response.success) {
+                    // Atualiza o status na interface
+                    updatePaymentStatus(response.data.status);
+                    
+                    // Se o pagamento foi confirmado ou falhou definitivamente, para de verificar
+                    if (['OK', 'FAILED', 'REJECTED', 'CANCELED'].includes(response.data.status)) {
+                        console.log('Status final recebido, parando verificação');
+                        clearInterval(statusInterval);
+                        
+                        // Se foi aprovado, mostra mensagem de sucesso
+                        if (response.data.status === 'OK') {
+                            showPaymentSuccess();
+                        }
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Erro ao verificar status:', error);
+            }
+        });
+    }
+    
+    // Inicia a verificação imediatamente e depois a cada 10 segundos
+    checkPaymentStatus();
+    const statusInterval = setInterval(checkPaymentStatus, 10000);
+    
+    // Armazena o intervalo para poder cancelá-lo depois
+    window.ninjapayStatusInterval = statusInterval;
+}
+
+// Função para atualizar o status na interface
+function updatePaymentStatus(status) {
+    let statusText = 'Aguardando pagamento...';
+    let statusClass = 'status-pending';
+    
+    switch(status) {
+        case 'OK':
+            statusText = 'Pagamento aprovado! Obrigado pela sua contribuição.';
+            statusClass = 'status-completed';
+            break;
+        case 'PENDING':
+            statusText = 'Aguardando pagamento...';
+            statusClass = 'status-pending';
+            break;
+        case 'FAILED':
+            statusText = 'Pagamento falhou. Por favor, tente novamente.';
+            statusClass = 'status-failed';
+            break;
+        case 'REJECTED':
+            statusText = 'Pagamento rejeitado. Por favor, tente novamente.';
+            statusClass = 'status-failed';
+            break;
+        case 'CANCELED':
+            statusText = 'Pagamento cancelado.';
+            statusClass = 'status-canceled';
+            break;
+    }
+    
+    $('#ninjapay-payment-status')
+        .text(statusText)
+        .removeClass('status-pending status-completed status-failed status-canceled')
+        .addClass(statusClass);
+}
+
+// Função para mostrar mensagem de sucesso
+function showPaymentSuccess() {
+    // Adiciona uma mensagem de sucesso mais visível
+    if ($('.payment-success-message').length === 0) {
+        $('#ninjapay-result').prepend(
+            '<div class="payment-success-message">' +
+            '<div class="success-icon">✓</div>' +
+            '<h3>Pagamento Aprovado!</h3>' +
+            '<p>Agradecemos sua contribuição.</p>' +
+            '</div>'
+        );
+    }
+}
+
+// Modifique a parte do seu código que processa a resposta de sucesso
+if (response && response.success) {
+    // Código existente...
+    
+    // Inicia a verificação de status
+    if (response.data.transaction_id) {
+        startPaymentStatusCheck(response.data.transaction_id);
+    }
+}
