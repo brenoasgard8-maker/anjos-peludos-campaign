@@ -1128,7 +1128,7 @@ src="https://www.facebook.com/tr?id=945110901226393&ev=PageView&noscript=1"/>
                         document.querySelector('.progress-wrapper').setAttribute('aria-valuenow', porcentagem);
                     </script>
 
-                    <div class="elementor-element elementor-element-65df1ee e-con-full e-flex e-con e-child" data-id="65df1ee" data-element_type="container" data-settings="{" background_background ":"classic "}"="">
+                    <div class="elementor-element elementor-element-65df1ee e-con-full e-flex e-con e-child" data-id="65df1ee" data-element_type="container" data-settings='{"background_background":"classic"}'
                         <div class="elementor-element elementor-element-f449a59 elementor-widget elementor-widget-text-editor" data-id="f449a59" data-element_type="widget" data-widget_type="text-editor.default">
                             <div class="elementor-widget-container">
                                 <h2><span style="vertical-align: inherit;"><span style="vertical-align: inherit;"><span
@@ -1413,11 +1413,27 @@ src="https://www.facebook.com/tr?id=945110901226393&ev=PageView&noscript=1"/>
 
                                 function css7_copyPix() {
     const input = document.getElementById('css7_inputPix');
-    navigator.clipboard.writeText(input.value);
 
-    fbq('track', 'InitiateCheckout'); // 🔥 evento que presta
+    navigator.clipboard.writeText(input.value).then(() => {
 
-    alert("Chave PIX copiada! Agora cole no seu banco e finalize o pagamento");
+        fbq('track', 'InitiateCheckout');
+
+        iziToast.success({
+            title: 'PIX Copiado!',
+            message: 'Agora cola no banco e salva um doguinho 🐕',
+            position: 'center',
+            timeout: 4000
+        });
+
+    }).catch(() => {
+
+        iziToast.error({
+            title: 'Erro ao copiar!',
+            message: 'Copia manualmente o e-mail acima 👆',
+            position: 'center'
+        });
+
+    });
 }
                             </script>
 
